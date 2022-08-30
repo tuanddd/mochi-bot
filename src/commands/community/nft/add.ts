@@ -130,8 +130,14 @@ export async function toEmbed(
           "NFT",
           "Cannot found metadata for this collection"
         )
-      } else {
-        return buildDiscordMessage(msg, "NFT", errorMessageCollection)
+      } else if (
+        errorMessageCollection.includes("Collection does not have an address")
+      ) {
+        return buildDiscordMessage(
+          msg,
+          "NFT",
+          "Collection does not have an address"
+        )
       }
   }
 }
