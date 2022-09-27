@@ -2,23 +2,13 @@ import { Message } from "discord.js"
 import { HELP_GITBOOK, HOMEPAGE_URL } from "utils/constants"
 import dayjs from "dayjs"
 import utc from "dayjs/plugin/utc"
-import { originalCommands } from "../commands"
-import { capFirst, thumbnails } from "utils/common"
-import config from "../adapters/config"
+import { capFirst, getEmoji, thumbnails } from "utils/common"
 import { Command } from "types/common"
 import { composeEmbedMessage } from "utils/discordEmbed"
 dayjs.extend(utc)
 
 const image =
   "https://cdn.discordapp.com/attachments/984660970624409630/1023869479521882193/help2.png"
-
-// const categoryIcons: Record<Category, string> = {
-//   Profile: emojis.PROFILE,
-//   Config: emojis.PROFILE,
-//   Defi: emojis.DEFI,
-//   Community: emojis.DEFI,
-//   Game: emojis.GAME,
-// }
 
 function getHelpEmbed(msg: Message) {
   return composeEmbedMessage(msg, {
@@ -28,27 +18,67 @@ function getHelpEmbed(msg: Message) {
   })
 }
 
-/**
- * Validate if categories for admin can be displayed.
- * Sort categories by number of their commands in DESCENDING order
- *
- */
-// async function displayCategories() {
-//   return (
-//     Object.entries(categoryIcons)
-//       // .filter((cat) => isAdmin || !adminCategories[cat[0] as Category])
-//       .sort((catA, catB) => {
-//         const commandsOfThisCatA = Object.values(originalCommands)
-//           .filter(Boolean)
-//           .filter((c) => c.category === catA[0]).length
-//         const commandsOfThisCatB = Object.values(originalCommands)
-//           .filter(Boolean)
-//           .filter((c) => c.category === catB[0]).length
-//
-//         return commandsOfThisCatB - commandsOfThisCatA
-//       })
-//   )
-// }
+const commands: Record<
+  string,
+  {
+    emoji: string
+    description: string
+    features: Array<{ value: string; url: string }>
+  }
+> = {
+  Verify: {
+    emoji: getEmoji("approve"),
+    description: "Verify your wallet",
+    features: [
+      {
+        value: "verify",
+        url: "https://mochibot.gitbook.io/mochi-bot/getting-started/wallet",
+      },
+    ],
+    // features: "`$verify`",
+  },
+  Telegram: {
+    description: "Link Telegram to Discord account",
+    features: "`$telegram`",
+  },
+  Vote: {
+    description: "Vote for us and earn more reward",
+    features: "`$vote`",
+  },
+  "Server Insight": {
+    description:
+      "Gain more server insight of channel, member, emoji, sticker statistic",
+    features: "`$stat`",
+  },
+  "Track NFT": {
+    description: "Check NFT rarity, track NFT sales and ranking",
+    features: "`$sales`, `$nft`",
+  },
+  "Develop Community": {
+    description: "Set up channels and other add-ins to facilitate activities",
+    features: "`$verify`",
+  },
+  "Manage Member Profile": {
+    description: "Tracking member profile and ranking",
+    features: "`$profile`, `$top`",
+  },
+  "Manage Server Memeber": {
+    description: "Grow the number of members or remove inactive ones",
+    features: "`$invite`, `$prune`",
+  },
+  "Track Crypto": {
+    description: "Tracking crypto market movements and opportunities",
+    features: "`$tokens`, `$ticker`, `$watchlist`",
+  },
+  Transaction: {
+    description: "Making transactions among members and in your wallet",
+    features: "`$tip`, `$deposit`, `$balances`, `$airdrop`, `$withdraw`",
+  },
+  "Assign Role": {
+    description: "Assign role for members based on different criteria",
+    features: "`$defaultrole`, `$reactionrole`, `$levelrole`, `$nftrole`",
+  },
+}
 
 const command: Command = {
   id: "help",
@@ -61,51 +91,11 @@ const command: Command = {
   },
   getHelpMessage: async (msg: Message) => {
     const embed = getHelpEmbed(msg)
-    // const categories = await displayCategories()
-    //
-    // let idx = 0
-    // for (const item of Object.values(categories)) {
-    //   const category = item[0]
-    //   if (!(await config.categoryIsScoped(msg, category))) continue
-    //
-    //   const commandsByCat = (
-    //     await Promise.all(
-    //       Object.values(originalCommands)
-    //         .filter((cmd) => cmd.id !== "help")
-    //         .filter(
-    //           async (cmd) =>
-    //             await config.commandIsScoped(msg, cmd.category, cmd.command)
-    //         )
-    //     )
-    //   )
-    //     .filter((c) => c.category === category && !c.experimental)
-    //     .map((c) => `[\`${c.command}\`](https://google.com)`)
-    //     .join(" ")
-    //
-    //   if (!commandsByCat) continue
-    //
-    //   // add blank field as the third column
-    //   if (idx % 3 === 2) embed.addFields(EMPTY_FIELD)
-    //   embed.addFields({
-    //     name: `${category}`,
-    //     value: `${commandsByCat}`,
-    //     inline: true,
-    //   })
-    //   idx++
-    // }
-    const commands = await Promise.all(
-      Object.values(originalCommands)
-        .filter((cmd) => cmd.id !== "help")
-        .filter((cmd) => cmd.featured)
-        .filter(
-          async (cmd) =>
-            await config.commandIsScoped(msg, cmd.category, cmd.command)
-        )
-    )
-    commands.forEach((cmd) => {
+    Object.entries(commands).forEach((cmd) => {
+      const [cmdName, cmdData] = cmd
       embed.addFields({
-        name: capFirst(cmd.featured?.title ?? ""),
-        value: `\`$${cmd.command}\`\n${cmd.featured?.description ?? ""}`,
+        name: capFirst(cmdName ?? ""),
+        value: `${cmdData.features}\n${cmdData.description}`,
         inline: true,
       })
     })
